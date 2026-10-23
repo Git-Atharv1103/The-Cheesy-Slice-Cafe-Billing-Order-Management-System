@@ -1,0 +1,18 @@
+{
+  "short_name": "CheesySlice",
+  "name": "The Cheesy Slice - Cafe Billing & KDS",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "theme_color": "#f59e0b",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Mobile Billing and Kitchen Display System for The Cheesy Slice Cafe, FC Road, Pune"
+}
