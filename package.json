@@ -3,9 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "description": "The Cheesy Slice Cafe Billing and Kitchen Display System",
+  "type": "module",
   "scripts": {
     "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
     "start": "node backend/src/server.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0",
+    "uuid": "^10.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
