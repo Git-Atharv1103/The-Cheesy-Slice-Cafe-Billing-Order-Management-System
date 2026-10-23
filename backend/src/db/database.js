@@ -16,9 +16,19 @@ let client;
 
 export function getDb() {
   if (!client) {
-    client = createClient({
-      url: `file:${DB_PATH}`,
-    });
+    const cloudUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
+
+    if (cloudUrl && (cloudUrl.startsWith('libsql://') || cloudUrl.startsWith('https://') || cloudUrl.startsWith('wss://'))) {
+      client = createClient({
+        url: cloudUrl,
+        authToken: authToken || undefined,
+      });
+    } else {
+      client = createClient({
+        url: `file:${DB_PATH}`,
+      });
+    }
   }
   return client;
 }

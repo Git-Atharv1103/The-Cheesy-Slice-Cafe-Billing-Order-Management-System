@@ -216,7 +216,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
     function connectSSE() {
       try {
-        const es = new EventSource('/api/events');
+        const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+        const eventsUrl = apiBase.endsWith('/api') ? `${apiBase}/events` : `${apiBase}/api/events`;
+        const es = new EventSource(eventsUrl);
         eventSourceRef.current = es;
 
         es.onopen = () => {
