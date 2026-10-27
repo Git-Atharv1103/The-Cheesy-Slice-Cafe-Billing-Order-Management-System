@@ -497,29 +497,29 @@ export default function KitchenPage() {
                             </div>
                           </div>
 
-                          {/* Individual Status Actions */}
-                          <div className="flex items-center gap-1.5 self-end sm:self-center flex-shrink-0">
+                          {/* Individual Status Actions - Mobile Touch Friendly (min 44px height) */}
+                          <div className="flex items-center gap-2 self-stretch sm:self-center justify-end flex-shrink-0 pt-1 sm:pt-0">
                             {isItemPending && (
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5 w-full sm:w-auto">
                                 <button
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'preparing')}
-                                  className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 hover:border-amber-300 text-xs font-bold flex items-center gap-1 transition-all"
+                                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-amber-100 text-gray-800 hover:text-amber-950 border border-gray-300 hover:border-amber-400 text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer flex-1 sm:flex-initial"
                                   title="Mark item as preparing"
                                 >
-                                  <Play size={12} fill="currentColor" />
-                                  <span>Prep</span>
+                                  <Play size={13} fill="currentColor" />
+                                  <span>PREP</span>
                                 </button>
                                 <button
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'ready')}
-                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                                  className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer flex-1 sm:flex-initial"
                                   title="Tick Ready: Mark item as finished"
                                 >
-                                  <Square size={13} />
-                                  <span>Tick Ready</span>
+                                  <Square size={15} />
+                                  <span>TICK READY</span>
                                 </button>
                               </div>
                             )}
@@ -529,35 +529,35 @@ export default function KitchenPage() {
                                 type="button"
                                 disabled={isUpdating}
                                 onClick={() => handleUpdateItemStatus(order.id, item.id, 'ready')}
-                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                                className="min-h-[44px] w-full sm:w-auto px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                                 title="Tick Ready: Mark item ready"
                               >
-                                <CheckSquare size={14} className="text-white" />
-                                <span>Mark Ready</span>
+                                <CheckSquare size={16} className="text-white" />
+                                <span>MARK READY</span>
                               </button>
                             )}
 
                             {isItemReady && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-extrabold flex items-center gap-1 shadow-2xs">
-                                  <CheckCircle2 size={13} className="text-emerald-700" />
-                                  <span>Ready</span>
+                              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                <span className="min-h-[44px] px-3 py-2 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black flex items-center justify-center gap-1.5 shadow-2xs">
+                                  <CheckCircle2 size={16} className="text-emerald-700" />
+                                  <span>READY</span>
                                 </span>
                                 <button
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'served')}
-                                  className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-800 border border-gray-200 hover:border-purple-300 text-xs font-bold flex items-center gap-1 transition-all"
+                                  className="min-h-[44px] px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-900 border border-gray-300 hover:border-purple-300 text-xs font-black flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                                   title="Mark this item handed over / served"
                                 >
-                                  <span>Serve</span>
-                                  <ArrowRight size={12} />
+                                  <span>SERVED</span>
+                                  <ArrowRight size={13} />
                                 </button>
                               </div>
                             )}
 
                             {isItemServed && (
-                              <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200 text-xs font-bold flex items-center gap-1">
+                              <span className="min-h-[38px] px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 border border-gray-200 text-xs font-bold flex items-center justify-center gap-1">
                                 <Check size={13} />
                                 <span>Served</span>
                               </span>

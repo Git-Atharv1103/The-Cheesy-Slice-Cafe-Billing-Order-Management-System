@@ -19,6 +19,8 @@ import DailySalesPage from './pages/DailySalesPage';
 import MenuManagementPage from './pages/MenuManagementPage';
 import SettingsPage from './pages/SettingsPage';
 
+import { InstallPrompt } from './components/InstallPrompt';
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -26,6 +28,7 @@ export default function App() {
         <CafeProvider>
           <CartProvider>
             <RealtimeProvider>
+              <InstallPrompt />
               <Toaster
                 position="top-right"
                 toastOptions={{
@@ -38,8 +41,11 @@ export default function App() {
                 <Route element={<Layout />}>
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/new-order" element={<NewOrderPage />} />
+                  <Route path="/orders/new" element={<NewOrderPage />} />
                   <Route path="/cart" element={<CartPage />} />
+                  <Route path="/orders/cart" element={<CartPage />} />
                   <Route path="/payment" element={<PaymentPage />} />
+                  <Route path="/orders/payment" element={<PaymentPage />} />
                   <Route path="/kitchen" element={<KitchenPage />} />
                   <Route path="/orders/:id/confirmation" element={<OrderConfirmationPage />} />
                   <Route path="/orders" element={<OrdersPage />} />

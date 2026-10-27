@@ -189,15 +189,15 @@ export default function NewOrderPage() {
                   <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
                     <p className="text-amber-600 font-black text-base">{formatINR(item.price)}</p>
 
-                    {/* Add / Qty Control */}
+                    {/* Add / Qty Control - Touch Friendly */}
                     <div className="flex-shrink-0">
                       {qty === 0 ? (
                         <button
                           type="button"
                           onClick={() => handleAdd(item)}
-                          className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-xl transition-all text-xs shadow-xs"
+                          className="min-h-[40px] flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black px-3.5 py-2 rounded-xl transition-all text-xs shadow-xs cursor-pointer"
                         >
-                          <Plus size={14} />
+                          <Plus size={15} />
                           <span>Add</span>
                         </button>
                       ) : (
@@ -205,19 +205,21 @@ export default function NewOrderPage() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, qty - 1)}
-                            className="px-2.5 py-1 text-gray-700 hover:bg-gray-200 transition-colors"
+                            className="w-9 h-9 flex items-center justify-center text-gray-800 hover:bg-gray-200 active:bg-gray-300 transition-colors cursor-pointer"
                             title="Decrease"
+                            aria-label="Decrease quantity"
                           >
-                            <Minus size={13} />
+                            <Minus size={15} />
                           </button>
-                          <span className="text-gray-900 font-black text-xs px-2 min-w-[20px] text-center">{qty}</span>
+                          <span className="text-gray-900 font-black text-xs px-2 min-w-[24px] text-center">{qty}</span>
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, qty + 1)}
-                            className="px-2.5 py-1 text-gray-700 hover:bg-gray-200 transition-colors"
+                            className="w-9 h-9 flex items-center justify-center text-gray-800 hover:bg-gray-200 active:bg-gray-300 transition-colors cursor-pointer"
                             title="Increase"
+                            aria-label="Increase quantity"
                           >
-                            <Plus size={13} />
+                            <Plus size={15} />
                           </button>
                         </div>
                       )}
