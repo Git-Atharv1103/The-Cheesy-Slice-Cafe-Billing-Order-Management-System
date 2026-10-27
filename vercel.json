@@ -1,27 +1,14 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "the-cheesy-slice-cafe",
-  "services": {
-    "frontend": {
-      "root": "frontend/"
-    },
-    "backend": {
-      "root": "backend/",
-      "entrypoint": "src/server.js"
-    }
-  },
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": { "service": "backend" }
-    },
-    {
-      "source": "/uploads/(.*)",
-      "destination": { "service": "backend" }
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
-      "destination": { "service": "frontend" }
+      "destination": "/index.html"
     }
   ]
 }
