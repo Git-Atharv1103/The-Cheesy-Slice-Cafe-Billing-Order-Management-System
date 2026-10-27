@@ -124,9 +124,27 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
       return res.status(400).json({ error: 'Customer name and items are required' });
     }
 
+    // Sanitize item prices and quantities to guarantee finite numbers
+    const sanitizedItems = (items || []).map(item => {
+      let unitPrice = item.unit_price;
+      if (unitPrice === undefined || unitPrice === null || isNaN(Number(unitPrice))) {
+        unitPrice = item.price != null ? (Number(item.price) > 1000 ? Number(item.price) : Math.round(Number(item.price) * 100)) : 0;
+      } else {
+        unitPrice = Math.round(Number(unitPrice));
+      }
+      if (isNaN(unitPrice) || !isFinite(unitPrice)) unitPrice = 0;
+      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+      return {
+        ...item,
+        unit_price: unitPrice,
+        quantity: qty,
+        total_price: unitPrice * qty
+      };
+    });
+
     // Fast check for double-click duplicate creation within 3 seconds
-    const subtotalCalc = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-    const dedupeKey = `${req.user?.id || 'anon'}:${customer_name.trim().toLowerCase()}:${items.length}:${subtotalCalc}`;
+    const subtotalCalc = sanitizedItems.reduce((sum, item) => sum + item.total_price, 0);
+    const dedupeKey = `${req.user?.id || 'anon'}:${customer_name.trim().toLowerCase()}:${sanitizedItems.length}:${subtotalCalc}`;
     const recent = recentOrdersMap.get(dedupeKey);
     if (recent && (Date.now() - recent.time < 3000)) {
       return res.status(200).json(recent.order);
@@ -137,14 +155,17 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
     const orderDate = getISTDate();
     const dailyOrderNumber = await getNextOrderNumber(db, orderDate);
 
-    // Calculate totals in paise
-    const subtotal = subtotalCalc;
-    const discountAmt = Math.round(Number(discount || 0) * 100);
+    // Calculate totals in paise (guaranteed non-negative finite integers)
+    const subtotal = Math.max(0, Math.round(subtotalCalc) || 0);
+    const discountAmt = Math.max(0, Math.round(Number(discount || 0) * 100) || 0);
     const total = Math.max(0, subtotal - discountAmt);
 
     // Payments
     const payments = paymentsList || [];
-    const totalPaid = payments.reduce((sum, p) => sum + Math.round(Number(p.amount) * 100), 0);
+    const totalPaid = payments.reduce((sum, p) => {
+      const amt = Math.round(Number(p.amount || 0) * 100);
+      return sum + (isNaN(amt) || !isFinite(amt) ? 0 : Math.max(0, amt));
+    }, 0);
     const balanceDue = Math.max(0, total - totalPaid);
 
     let paymentStatus = 'pending';
@@ -152,31 +173,33 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
     else if (totalPaid > 0) paymentStatus = 'partial';
 
     const nowIso = new Date().toISOString();
+    const userId = req.user?.id || 'cashier';
 
     // Insert order (status begins as 'new' for kitchen display)
     await db.execute({
       sql: `INSERT INTO orders (id, daily_order_number, order_date, customer_name, customer_phone, special_instructions, subtotal, discount, total, total_paid, balance_due, payment_status, order_status, created_by, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?)`,
-      args: [orderId, dailyOrderNumber, orderDate, customer_name, customer_phone || '', special_instructions || '', subtotal, discountAmt, total, totalPaid, balanceDue, paymentStatus, req.user.id, nowIso, nowIso]
+      args: [orderId, dailyOrderNumber, orderDate, customer_name, customer_phone || '', special_instructions || '', subtotal, discountAmt, total, totalPaid, balanceDue, paymentStatus, userId, nowIso, nowIso]
     });
 
     // Insert items with status = 'pending'
-    for (const item of items) {
+    for (const item of sanitizedItems) {
       await db.execute({
         sql: `INSERT INTO order_items (id, order_id, menu_item_id, name, category_name, unit_price, quantity, total_price, status, created_at)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-        args: [uuidv4(), orderId, item.menu_item_id || null, item.name, item.category_name || '', item.unit_price, item.quantity, item.unit_price * item.quantity, nowIso]
+        args: [uuidv4(), orderId, item.menu_item_id || null, item.name, item.category_name || '', item.unit_price, item.quantity, item.total_price, nowIso]
       });
     }
 
     // Insert payments
     for (const p of payments) {
-      if (Number(p.amount) > 0) {
+      const pAmt = Math.round(Number(p.amount || 0) * 100);
+      if (pAmt > 0 && isFinite(pAmt)) {
         const method = p.method || p.payment_method || 'cash';
         await db.execute({
           sql: `INSERT INTO payments (id, order_id, payment_method, amount, reference, payment_status, recorded_by, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
-          args: [uuidv4(), orderId, method, Math.round(Number(p.amount) * 100), p.reference || '', req.user.id, nowIso, nowIso]
+          args: [uuidv4(), orderId, method, pAmt, p.reference || '', userId, nowIso, nowIso]
         });
       }
     }
