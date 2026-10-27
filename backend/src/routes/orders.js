@@ -172,10 +172,11 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
     // Insert payments
     for (const p of payments) {
       if (Number(p.amount) > 0) {
+        const method = p.method || p.payment_method || 'cash';
         await db.execute({
           sql: `INSERT INTO payments (id, order_id, payment_method, amount, reference, payment_status, recorded_by, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?, ?)`,
-          args: [uuidv4(), orderId, p.method, Math.round(Number(p.amount) * 100), p.reference || '', req.user.id, nowIso, nowIso]
+          args: [uuidv4(), orderId, method, Math.round(Number(p.amount) * 100), p.reference || '', req.user.id, nowIso, nowIso]
         });
       }
     }

@@ -176,10 +176,14 @@ export default function PaymentPage() {
       navigate(`/orders/${res.data.id}/confirmation`, { state: { order: res.data } });
     } catch (err: unknown) {
       const error = err as { response?: { status?: number; data?: { error?: string } } };
-      if (error?.response?.status === 403) {
-        toast.error(`Insufficient permissions: Account @${user?.username || 'user'} is not authorized to create orders. Please log in with a Cashier account.`);
+      const serverMsg = error?.response?.data?.error;
+      if (error?.response?.status === 403 && (serverMsg?.includes('permissions') || user?.role === 'kitchen')) {
+        toast.error(`Account @${user?.username || 'user'} (${user?.role}) is not authorized to create orders. Please log in with a Cashier account.`);
+      } else if (error?.response?.status === 401 || serverMsg?.includes('token') || serverMsg?.includes('expired')) {
+        toast.error('Your login session has expired. Please log in again.');
+        navigate('/login');
       } else {
-        toast.error(error?.response?.data?.error || 'Failed to place order. Your cart is preserved.');
+        toast.error(serverMsg || 'Failed to place order. Your cart is preserved.');
       }
     } finally {
       setPlacing(false);
