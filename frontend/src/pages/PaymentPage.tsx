@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useCafe } from '../contexts/CafeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatINR } from '../lib/utils';
-import { ArrowLeft, Smartphone, Banknote, Split, CheckCircle, QrCode, Sparkles, AlertCircle, ShieldCheck, UserCheck } from 'lucide-react';
+import {
+  ArrowLeft, Smartphone, Banknote, Split, CheckCircle,
+  QrCode, Sparkles, AlertCircle, ShieldCheck, UserCheck
+} from 'lucide-react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
@@ -28,6 +31,7 @@ export default function PaymentPage() {
   const [qrViewMode, setQrViewMode] = useState<'standee' | 'dynamic'>('standee');
   const [upiConfirmed, setUpiConfirmed] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const totalRupees = total / 100;
 
@@ -52,7 +56,7 @@ export default function PaymentPage() {
       setOnlineAmount(totalRupees.toFixed(2));
       setCashAmount('0.00');
     } else {
-      // Split mode default: default half or cash = 0, upi = total
+      // Split mode: default half or cash = 0, upi = total
       const initialCash = Math.min(100, Math.floor(totalRupees / 2));
       const remainingUpi = Math.max(0, totalRupees - initialCash);
       setCashAmount(initialCash > 0 ? initialCash.toFixed(2) : '0.00');
@@ -129,8 +133,10 @@ export default function PaymentPage() {
   }
 
   async function handleConfirmAndPlace() {
+    if (isSubmittingRef.current || placing) return; // Prevent double-click race conditions
+
     if (!customerName.trim()) {
-      toast.error('Customer / Order name is required');
+      toast.error('Customer / Table name is required');
       navigate('/cart');
       return;
     }
@@ -146,6 +152,7 @@ export default function PaymentPage() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setPlacing(true);
     try {
       const payload = {
@@ -172,38 +179,41 @@ export default function PaymentPage() {
       if (error?.response?.status === 403) {
         toast.error(`Insufficient permissions: Account @${user?.username || 'user'} is not authorized to create orders. Please log in with a Cashier account.`);
       } else {
-        toast.error(error?.response?.data?.error || 'Failed to place order');
+        toast.error(error?.response?.data?.error || 'Failed to place order. Your cart is preserved.');
       }
     } finally {
       setPlacing(false);
+      isSubmittingRef.current = false;
     }
   }
 
   if (isKitchen) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 text-center">
-        <div className="bg-[#141414] border border-[#282828] p-6 rounded-2xl max-w-md shadow-2xl">
-          <div className="w-12 h-12 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center mx-auto mb-3">
+      <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center text-gray-900">
+        <div className="bg-white border border-gray-200 p-6 rounded-3xl max-w-md shadow-xl">
+          <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center mx-auto mb-3">
             <AlertCircle size={24} />
           </div>
-          <h2 className="text-white font-black text-lg mb-2">Kitchen Account Active</h2>
-          <p className="text-gray-400 text-xs mb-5">
-            You are currently signed in as <strong className="text-white">@{user?.username}</strong> ({user?.role?.toUpperCase()}).
+          <h2 className="text-gray-900 font-black text-lg mb-2">Kitchen Account Active</h2>
+          <p className="text-gray-600 text-xs mb-5">
+            You are currently signed in as <strong className="text-gray-900">@{user?.username}</strong> ({user?.role?.toUpperCase()}).
             Kitchen accounts cannot create orders or collect payments. Please switch to a Cashier account.
           </p>
           <div className="flex flex-col gap-2">
             <button
+              type="button"
               onClick={() => navigate('/kitchen')}
-              className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-2.5 rounded-xl font-bold text-xs transition-colors"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl font-bold text-xs transition-colors shadow-xs"
             >
               Go to Kitchen Display (KDS)
             </button>
             <button
+              type="button"
               onClick={() => {
                 logout();
                 navigate('/login');
               }}
-              className="w-full bg-[#1c1c1c] hover:bg-[#252525] border border-[#333] text-gray-300 py-2.5 rounded-xl font-bold text-xs transition-colors"
+              className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-xs transition-colors"
             >
               Log Out & Sign In as Cashier
             </button>
@@ -220,53 +230,57 @@ export default function PaymentPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0a0a]">
+    <div className="flex flex-col min-h-screen bg-[#F9FAFB] text-gray-900">
       {/* Header */}
-      <div className="p-4 md:p-6 border-b border-[#242424] bg-[#0d0d0d] sticky top-0 z-10 flex items-center justify-between gap-3">
+      <div className="p-4 md:p-6 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-xs flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <button
+            type="button"
             onClick={() => navigate('/cart')}
-            className="text-gray-400 hover:text-white p-1 rounded-lg transition-colors flex-shrink-0"
+            className="text-gray-500 hover:text-gray-900 p-1.5 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0"
+            title="Back to cart"
           >
             <ArrowLeft size={22} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xl md:text-2xl font-black text-white truncate">Payment & Checkout</h1>
-            <p className="text-gray-400 text-xs truncate">Order for: <span className="text-yellow-400 font-semibold">{customerName}</span></p>
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 truncate">Payment & Settlement</h1>
+            <p className="text-gray-500 text-xs truncate">
+              Order for: <span className="text-amber-700 font-bold">{customerName}</span>
+            </p>
           </div>
         </div>
 
         {user && (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-xs text-gray-300 flex-shrink-0">
-            <UserCheck size={14} className="text-green-400" />
-            <span>Cashier: <strong className="text-white">@{user.username}</strong></span>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 font-semibold flex-shrink-0">
+            <UserCheck size={14} className="text-emerald-600" />
+            <span>Cashier: <strong className="text-gray-900">@{user.username}</strong></span>
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
         <div className="max-w-xl mx-auto space-y-5">
           {/* Bill Overview Header */}
-          <div className="bg-[#141414] border border-[#242424] rounded-2xl p-5 shadow-lg">
-            <div className="flex items-center justify-between text-sm text-gray-400 pb-3 border-b border-[#242424]">
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs">
+            <div className="flex items-center justify-between text-sm text-gray-500 pb-3 border-b border-gray-100">
               <span>Subtotal ({items.length} items)</span>
-              <span>{formatINR(subtotal)}</span>
+              <span className="font-semibold text-gray-800">{formatINR(subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex items-center justify-between text-xs text-green-400 py-2 border-b border-[#242424]">
+              <div className="flex items-center justify-between text-xs text-emerald-600 py-2 border-b border-gray-100 font-semibold">
                 <span>Discount Applied</span>
                 <span>-{formatINR(discount)}</span>
               </div>
             )}
             <div className="flex items-center justify-between pt-3">
-              <span className="text-white font-extrabold text-base">Total Payable</span>
-              <span className="text-2xl font-black text-yellow-400">{formatINR(total)}</span>
+              <span className="text-gray-900 font-extrabold text-base">Total Payable</span>
+              <span className="text-2xl font-black text-amber-600">{formatINR(total)}</span>
             </div>
           </div>
 
           {/* Payment Method Switcher */}
-          <div className="bg-[#141414] border border-[#242424] rounded-2xl p-4 md:p-5">
-            <h2 className="text-white font-bold text-sm mb-3">Select Payment Method</h2>
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5 shadow-xs">
+            <h2 className="text-gray-900 font-extrabold text-sm mb-3">Select Payment Method</h2>
             <div className="grid grid-cols-3 gap-2">
               {modeButtons.map(({ mode, label, icon: Icon }) => (
                 <button
@@ -275,11 +289,11 @@ export default function PaymentPage() {
                   onClick={() => handleSelectMode(mode)}
                   className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border text-xs font-bold transition-all ${
                     paymentMode === mode
-                      ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400 ring-1 ring-yellow-400/50 shadow-md'
-                      : 'border-[#282828] bg-[#1a1a1a] text-gray-400 hover:text-white hover:border-[#383838]'
+                      ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400/20 shadow-xs'
+                      : 'border-gray-200 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  <Icon size={18} />
+                  <Icon size={18} className={paymentMode === mode ? 'text-amber-600' : 'text-gray-400'} />
                   <span className="text-center">{label}</span>
                 </button>
               ))}
@@ -287,10 +301,10 @@ export default function PaymentPage() {
 
             {/* Split Mode Helper Notice */}
             {paymentMode === 'split' && (
-              <div className="mt-4 p-3 rounded-xl bg-yellow-400/10 border border-yellow-400/20 text-yellow-300 text-xs flex items-start gap-2">
-                <Sparkles size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+                <Sparkles size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
                 <p>
-                  <strong>Split Calculator Active:</strong> Enter any amount in Cash or UPI. The remaining balance automatically syncs to the other field and updates the QR code instantly!
+                  <strong>Split Calculator:</strong> Enter any amount in Cash or UPI. The remaining balance automatically syncs to the other field and updates the QR code instantly!
                 </p>
               </div>
             )}
@@ -298,17 +312,17 @@ export default function PaymentPage() {
 
           {/* Cash Input Section */}
           {(paymentMode === 'cash' || paymentMode === 'split') && (
-            <div className="bg-[#141414] border border-[#242424] rounded-2xl p-4 md:p-5 space-y-3">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                  <Banknote size={16} className="text-green-400" />
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Banknote size={16} className="text-emerald-600" />
                   <span>Cash Received (₹)</span>
                 </label>
                 {paymentMode === 'split' && (
                   <button
                     type="button"
                     onClick={() => handleCashChange(totalRupees.toFixed(2))}
-                    className="text-xs text-yellow-400 hover:underline"
+                    className="text-xs text-amber-600 font-bold hover:underline"
                   >
                     All in Cash (₹{totalRupees.toFixed(2)})
                   </button>
@@ -320,25 +334,25 @@ export default function PaymentPage() {
                 onChange={e => handleCashChange(e.target.value)}
                 placeholder="0.00"
                 min="0"
-                step="0.01"
-                className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-xl px-4 py-3 text-white font-extrabold text-lg focus:border-yellow-400 focus:outline-none"
+                step="1"
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 font-black text-xl focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
               />
             </div>
           )}
 
           {/* UPI Section & Dynamic QR */}
           {(paymentMode === 'online' || paymentMode === 'split') && (
-            <div className="bg-[#141414] border border-[#242424] rounded-2xl p-4 md:p-5 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                  <Smartphone size={16} className="text-blue-400" />
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Smartphone size={16} className="text-blue-600" />
                   <span>UPI Payment Required (₹)</span>
                 </label>
                 {paymentMode === 'split' && (
                   <button
                     type="button"
                     onClick={() => handleOnlineChange(totalRupees.toFixed(2))}
-                    className="text-xs text-yellow-400 hover:underline"
+                    className="text-xs text-amber-600 font-bold hover:underline"
                   >
                     All in UPI (₹{totalRupees.toFixed(2)})
                   </button>
@@ -351,16 +365,16 @@ export default function PaymentPage() {
                 onChange={e => handleOnlineChange(e.target.value)}
                 placeholder="0.00"
                 min="0"
-                step="0.01"
-                className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-xl px-4 py-3 text-white font-extrabold text-lg focus:border-yellow-400 focus:outline-none"
+                step="1"
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 font-black text-xl focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-xs"
               />
 
               {/* QR Code Presentation Box */}
-              <div className="bg-white rounded-2xl p-5 text-center text-black shadow-xl space-y-3">
+              <div className="bg-white rounded-2xl p-5 text-center text-gray-900 border border-gray-200 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    <QrCode size={16} />
-                    <span>Scan & Pay</span>
+                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-gray-700 uppercase tracking-wider">
+                    <QrCode size={16} className="text-amber-600" />
+                    <span>Scan & Pay via UPI</span>
                   </div>
 
                   {/* Toggle between Standee QR and Dynamic QR */}
@@ -370,27 +384,27 @@ export default function PaymentPage() {
                       onClick={() => setQrViewMode('standee')}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         qrViewMode === 'standee'
-                          ? 'bg-blue-600 text-white shadow-sm'
+                          ? 'bg-blue-600 text-white shadow-xs font-bold'
                           : 'text-gray-600 hover:text-black'
                       }`}
                     >
-                      Paytm QR
+                      Paytm Standee
                     </button>
                     <button
                       type="button"
                       onClick={() => setQrViewMode('dynamic')}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         qrViewMode === 'dynamic'
-                          ? 'bg-yellow-400 text-black shadow-sm font-bold'
+                          ? 'bg-amber-500 text-white shadow-xs font-bold'
                           : 'text-gray-600 hover:text-black'
                       }`}
                     >
-                      Dynamic (₹)
+                      Exact (₹) QR
                     </button>
                   </div>
                 </div>
 
-                <div className="w-56 h-64 mx-auto bg-gray-50 rounded-xl p-2 border border-gray-200 flex items-center justify-center overflow-hidden">
+                <div className="w-56 h-64 mx-auto bg-gray-50 rounded-2xl p-2 border border-gray-200 flex items-center justify-center overflow-hidden shadow-xs">
                   {qrViewMode === 'standee' && qrUrl ? (
                     <img
                       src={qrUrl}
@@ -412,89 +426,89 @@ export default function PaymentPage() {
                 </div>
 
                 {/* Highlighted UPI exact amount to pay */}
-                <div className="bg-yellow-100 text-black py-2 px-3 rounded-xl border border-yellow-300">
+                <div className="bg-amber-50 text-amber-950 py-2.5 px-3 rounded-xl border border-amber-200 shadow-2xs">
                   <p className="text-xs text-gray-600 font-medium">Exact Amount Required:</p>
-                  <p className="text-xl font-black text-gray-900">
+                  <p className="text-2xl font-black text-gray-900 mt-0.5">
                     {formatINR(Math.round(activeOnline * 100))}
                   </p>
                   {settings.upi_id && (
-                    <p className="text-xs font-mono text-gray-700 mt-0.5 font-bold">UPI ID: {settings.upi_id}</p>
+                    <p className="text-xs font-mono text-gray-700 mt-1 font-bold">UPI ID: {settings.upi_id}</p>
                   )}
                 </div>
 
-                <p className="text-[11px] text-gray-500">Supports Paytm • PhonePe • GPay • BHIM • Cred UPI</p>
+                <p className="text-[11px] text-gray-500 font-medium">Supports Paytm • PhonePe • Google Pay • BHIM • Cred UPI</p>
               </div>
 
               {/* UPI Reference Number */}
               <div>
-                <label className="text-xs text-gray-400 mb-1.5 block">UPI Reference / UTR Number (Optional)</label>
+                <label className="text-xs text-gray-600 font-semibold mb-1.5 block">UPI Reference / UTR Number (Optional)</label>
                 <input
                   type="text"
                   value={onlineRef}
                   onChange={e => setOnlineRef(e.target.value)}
-                  placeholder="e.g. 12-digit UPI Ref ID"
-                  className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-xl px-4 py-2.5 text-white text-xs font-mono focus:border-yellow-400 focus:outline-none"
+                  placeholder="e.g. 12-digit UTR ID"
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 text-xs font-mono focus:border-amber-500 focus:outline-none shadow-xs"
                 />
               </div>
 
               {/* Cashier Payment Confirmation Requirement */}
-              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-[#1c1c1c] border border-[#2a2a2a] cursor-pointer hover:border-[#383838] transition-colors">
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 border border-gray-200 cursor-pointer hover:border-gray-300 transition-colors">
                 <input
                   type="checkbox"
                   checked={upiConfirmed}
                   onChange={e => setUpiConfirmed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded text-yellow-400 focus:ring-yellow-400 accent-yellow-400"
+                  className="mt-0.5 w-4 h-4 rounded text-amber-500 focus:ring-amber-500 accent-amber-500"
                 />
-                <span className="text-xs text-gray-300 select-none">
-                  I confirm that the customer has scanned the QR code and the payment of <strong className="text-yellow-400">{formatINR(Math.round(activeOnline * 100))}</strong> is verified.
+                <span className="text-xs text-gray-700 select-none">
+                  I confirm that the customer has scanned the QR code and the payment of <strong className="text-gray-900">{formatINR(Math.round(activeOnline * 100))}</strong> is verified.
                 </span>
               </label>
             </div>
           )}
 
-          {/* Exact Formula Breakdown as Requested */}
-          <div className="bg-[#141414] border border-[#242424] rounded-2xl p-5 space-y-2.5 text-xs">
-            <h3 className="font-extrabold text-sm text-white mb-2 flex items-center justify-between">
+          {/* Exact Formula Breakdown */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-2.5 text-xs shadow-xs">
+            <h3 className="font-extrabold text-sm text-gray-900 mb-2 flex items-center justify-between">
               <span>Payment Calculation Breakdown</span>
-              <ShieldCheck size={16} className="text-green-400" />
+              <ShieldCheck size={16} className="text-emerald-600" />
             </h3>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-gray-600">
               <span>Total Bill</span>
-              <span className="font-bold text-white">{formatINR(total)}</span>
+              <span className="font-bold text-gray-900">{formatINR(total)}</span>
             </div>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-gray-600">
               <span>Cash Received</span>
-              <span className="font-semibold text-green-400">{formatINR(Math.round(activeCash * 100))}</span>
+              <span className="font-semibold text-emerald-600">{formatINR(Math.round(activeCash * 100))}</span>
             </div>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-gray-600">
               <span>UPI Received</span>
-              <span className="font-semibold text-blue-400">{formatINR(Math.round(activeOnline * 100))}</span>
+              <span className="font-semibold text-blue-600">{formatINR(Math.round(activeOnline * 100))}</span>
             </div>
 
-            <div className="flex justify-between border-t border-[#242424] pt-2 text-gray-300">
+            <div className="flex justify-between border-t border-gray-100 pt-2 text-gray-800">
               <span>Total Received</span>
-              <span className="font-bold text-white">{formatINR(Math.round(totalReceived * 100))}</span>
+              <span className="font-bold text-gray-900">{formatINR(Math.round(totalReceived * 100))}</span>
             </div>
 
-            <div className="flex justify-between border-t border-[#242424] pt-2">
-              <span className="font-bold text-gray-300">Remaining Balance</span>
-              <span className={`font-black text-sm ${remainingBalance > 0 ? 'text-red-400' : 'text-green-400'}`}>
+            <div className="flex justify-between border-t border-gray-100 pt-2">
+              <span className="font-bold text-gray-800">Remaining Balance</span>
+              <span className={`font-black text-sm ${remainingBalance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                 {remainingBalance > 0 ? formatINR(Math.round(remainingBalance * 100)) : '✓ Fully Paid (₹0.00)'}
               </span>
             </div>
 
             {isOverpaid && (
-              <p className="text-red-400 text-xs font-semibold pt-1 flex items-center gap-1">
+              <p className="text-red-600 text-xs font-semibold pt-1 flex items-center gap-1">
                 <AlertCircle size={14} /> Overpayment of {formatINR(Math.round((totalReceived - totalRupees) * 100))}. Please adjust cash or UPI.
               </p>
             )}
           </div>
 
           {remainingBalance > 0 && totalReceived > 0 && (
-            <div className="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs">
+            <div className="p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-orange-900 text-xs">
               ⚠️ Order will be saved as <strong>Partially Paid</strong>. The outstanding balance of {formatINR(Math.round(remainingBalance * 100))} can be settled later from the Orders screen.
             </div>
           )}
@@ -502,17 +516,17 @@ export default function PaymentPage() {
       </div>
 
       {/* Checkout Action Button */}
-      <div className="p-4 border-t border-[#242424] bg-[#0d0d0d] sticky bottom-0">
+      <div className="fixed bottom-16 md:bottom-0 left-0 md:left-64 right-0 p-3 md:p-4 bg-white/95 backdrop-blur-md border-t border-gray-200 z-30 shadow-lg">
         <div className="max-w-xl mx-auto">
           <button
             type="button"
             onClick={handleConfirmAndPlace}
             disabled={placing || isOverpaid}
-            className={`w-full py-4 px-6 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl transition-all ${
+            className={`w-full py-4 px-6 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
               remainingBalance === 0
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-90 text-white'
-                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:opacity-90 text-white'
-            } disabled:opacity-40 disabled:cursor-not-allowed`}
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-amber-500 hover:bg-amber-600 text-white'
+            } disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]`}
           >
             <CheckCircle size={20} />
             <span>

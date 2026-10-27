@@ -27,10 +27,10 @@ export default function Layout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">Loading Cheesy Slice...</p>
+          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-600 text-sm font-medium">Loading The Cheesy Slice...</p>
         </div>
       </div>
     );
@@ -41,7 +41,6 @@ export default function Layout() {
 
   const userRole = (user.role || '').toLowerCase().trim();
   const isKitchen = userRole === 'kitchen';
-  const isCashier = userRole === 'cashier' || userRole === 'staff';
   const isAdmin = userRole === 'admin';
 
   // 2. Kitchen role protection: ONLY allowed on /kitchen
@@ -58,11 +57,11 @@ export default function Layout() {
   // Specialized Kitchen Layout: Zero Cashier clutter, no sidebar/bottom-nav, pure KDS
   if (isKitchen) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col font-sans">
+      <div className="min-h-screen bg-[#F9FAFB] text-gray-900 flex flex-col font-sans">
         {/* Dedicated KDS Top Bar */}
-        <header className="sticky top-0 z-40 bg-[#121212] border-b border-[#242424] px-4 sm:px-6 py-3 flex items-center justify-between shadow-xl">
+        <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-black border border-[#333] p-1 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 p-1 flex items-center justify-center flex-shrink-0 shadow-xs">
               <img
                 src={logoUrl}
                 alt="Logo"
@@ -74,26 +73,26 @@ export default function Layout() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-black text-sm sm:text-base text-white tracking-wide">
+                <h1 className="font-extrabold text-sm sm:text-base text-gray-900 tracking-wide">
                   {settings.cafe_name || 'The Cheesy Slice'}
                 </h1>
-                <span className="text-[10px] bg-orange-500/20 text-orange-400 border border-orange-500/30 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ChefHat size={11} /> KDS ACTIVE
+                <span className="text-[11px] bg-amber-100 text-amber-800 border border-amber-300 font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                  <ChefHat size={12} /> KDS ACTIVE
                 </span>
               </div>
-              <p className="text-gray-400 text-xs hidden sm:block">Kitchen Display System • Preparation Terminal</p>
+              <p className="text-gray-500 text-xs hidden sm:block">Kitchen Display System • Preparation Terminal</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {/* Test Sound button */}
             <button
               type="button"
               onClick={testChime}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#1a1a1a] hover:bg-yellow-400/20 text-yellow-400 border border-[#333] transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-all"
               title="Test notification chime"
             >
-              <Volume2 size={14} />
+              <Volume2 size={14} className="text-amber-600" />
               <span className="hidden sm:inline">Test Sound</span>
             </button>
 
@@ -104,10 +103,10 @@ export default function Layout() {
                 setAudioEnabled(!audioEnabled);
                 if (!audioEnabled) playChime('new');
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                 audioEnabled
-                  ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
-                  : 'bg-[#1a1a1a] text-gray-500 border-[#2a2a2a]'
+                  ? 'bg-amber-100 text-amber-800 border-amber-300 shadow-xs'
+                  : 'bg-gray-100 text-gray-500 border-gray-200'
               }`}
               title="Toggle audio alert chime"
             >
@@ -116,8 +115,8 @@ export default function Layout() {
             </button>
 
             {/* User badge */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-xs text-gray-300">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>{user.full_name || 'Kitchen Staff'}</span>
             </div>
 
@@ -128,7 +127,7 @@ export default function Layout() {
                 logout();
                 navigate('/login');
               }}
-              className="flex items-center gap-1.5 bg-[#1e1e1e] hover:bg-red-500/20 text-gray-300 hover:text-red-400 border border-[#333] px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
+              className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
               title="Sign out of Kitchen Display"
             >
               <LogOut size={14} />
@@ -141,9 +140,9 @@ export default function Layout() {
         {audioBlocked && (
           <div
             onClick={unlockAudio}
-            className="cursor-pointer bg-amber-500/25 border-b border-amber-500/40 px-4 py-2 text-center text-amber-200 text-xs font-bold flex items-center justify-center gap-2 animate-pulse"
+            className="cursor-pointer bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-amber-800 text-xs font-bold flex items-center justify-center gap-2"
           >
-            <Volume2 size={16} />
+            <Volume2 size={16} className="text-amber-600" />
             <span>Audio paused by browser autoplay policy. Click anywhere to activate live audio alerts!</span>
           </div>
         )}
@@ -158,7 +157,7 @@ export default function Layout() {
 
   // Full Cashier & Admin Layout
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-[#F9FAFB] text-gray-900 flex flex-col md:flex-row font-sans">
       {/* Real-time Order Ready Modal for Cashier */}
       <ReadyOrderAlert />
 
@@ -166,7 +165,7 @@ export default function Layout() {
       <Sidebar />
 
       {/* Mobile Top Header (hidden on desktop) */}
-      <header className="md:hidden sticky top-0 z-30 bg-[#0d0d0d]/95 backdrop-blur border-b border-[#242424] px-4 py-2.5 flex items-center justify-between">
+      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-2.5 flex items-center justify-between shadow-xs">
         <div
           onClick={() => navigate('/')}
           className="flex items-center gap-2.5 cursor-pointer"
@@ -174,14 +173,14 @@ export default function Layout() {
           <img
             src={logoUrl}
             alt="Logo"
-            className="w-8 h-8 rounded-lg object-contain bg-black border border-[#333]"
+            className="w-8 h-8 rounded-lg object-contain bg-white border border-gray-200 shadow-xs"
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/images/logo.png';
             }}
           />
           <div>
-            <h1 className="font-black text-sm text-white leading-tight">{settings.cafe_name || 'The Cheesy Slice'}</h1>
-            <p className="text-[10px] text-yellow-400 font-semibold">{settings.tagline || 'FC Road, Pune'}</p>
+            <h1 className="font-extrabold text-sm text-gray-900 leading-tight">{settings.cafe_name || 'The Cheesy Slice'}</h1>
+            <p className="text-[10px] text-amber-600 font-semibold">{settings.tagline || 'FC Road, Pune'}</p>
           </div>
         </div>
 
@@ -190,10 +189,10 @@ export default function Layout() {
           <button
             type="button"
             onClick={testChime}
-            className="p-2 rounded-xl text-xs font-bold bg-[#1a1a1a] hover:bg-yellow-400/20 text-yellow-400 border border-[#333] transition-colors"
+            className="p-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-colors"
             title="Test notification chime"
           >
-            <Volume2 size={16} />
+            <Volume2 size={16} className="text-amber-600" />
           </button>
 
           <button
@@ -204,8 +203,8 @@ export default function Layout() {
             }}
             className={`p-2 rounded-xl text-xs font-bold border transition-colors ${
               audioEnabled
-                ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
-                : 'bg-[#1a1a1a] text-gray-500 border-[#2a2a2a]'
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : 'bg-gray-100 text-gray-500 border-gray-200'
             }`}
             title="Toggle notification chime"
           >
@@ -216,7 +215,7 @@ export default function Layout() {
           {itemCount > 0 && (
             <button
               onClick={() => navigate('/cart')}
-              className="flex items-center gap-1 bg-yellow-400 text-black px-2.5 py-1.5 rounded-xl font-bold text-xs shadow-md"
+              className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-xl font-black text-xs shadow-sm transition-colors"
             >
               <ShoppingBag size={14} />
               <span>{itemCount}</span>
@@ -224,7 +223,7 @@ export default function Layout() {
           )}
 
           {/* User role pill */}
-          <span className="text-[10px] uppercase font-bold px-2 py-1 bg-[#1a1a1a] text-gray-300 rounded-lg border border-[#2e2e2e]">
+          <span className="text-[10px] uppercase font-bold px-2 py-1 bg-gray-100 text-gray-700 rounded-lg border border-gray-200">
             {user.role}
           </span>
         </div>
@@ -234,15 +233,15 @@ export default function Layout() {
       {audioBlocked && (
         <div
           onClick={unlockAudio}
-          className="md:ml-64 cursor-pointer bg-amber-500/25 border-b border-amber-500/40 px-4 py-2 text-center text-amber-200 text-xs font-bold flex items-center justify-center gap-2 animate-pulse"
+          className="md:ml-64 cursor-pointer bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-amber-800 text-xs font-bold flex items-center justify-center gap-2"
         >
-          <Volume2 size={16} />
-          <span>Audio alerts suspended by browser autoplay policy. Click here to enable sound!</span>
+          <Volume2 size={16} className="text-amber-600" />
+          <span>Audio alerts suspended by browser policy. Click here to enable sound!</span>
         </div>
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 ml-0 md:ml-64 min-h-screen pb-20 md:pb-6 overflow-x-hidden">
+      <main className="flex-1 ml-0 md:ml-64 min-h-screen pb-20 md:pb-6 overflow-x-hidden bg-[#F9FAFB]">
         <Outlet />
       </main>
 

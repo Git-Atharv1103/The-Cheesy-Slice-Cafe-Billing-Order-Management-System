@@ -32,27 +32,33 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-[#0d0d0d] border-r border-[#242424] flex-col z-40">
-      {/* Logo */}
-      <div className="p-5 border-b border-[#242424]">
+    <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 flex-col z-40 shadow-sm">
+      {/* Brand Header */}
+      <div className="p-5 border-b border-gray-100 bg-white">
         <div className="flex items-center gap-3">
-          <img
-            src={logoUrl}
-            alt="The Cheesy Slice Logo"
-            className="w-11 h-11 object-contain rounded-xl bg-black border border-[#333]"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/images/logo.png';
-            }}
-          />
+          <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <img
+              src={logoUrl}
+              alt="The Cheesy Slice Logo"
+              className="w-full h-full object-contain rounded-lg"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/images/logo.png';
+              }}
+            />
+          </div>
           <div className="min-w-0">
-            <h1 className="text-white font-extrabold text-sm leading-tight truncate">{settings.cafe_name || 'The Cheesy Slice'}</h1>
-            <p className="text-yellow-400 text-xs font-semibold">{settings.tagline ? settings.tagline.slice(0, 24) : 'FC Road, Pune'}</p>
+            <h1 className="text-gray-900 font-extrabold text-sm leading-tight truncate">
+              {settings.cafe_name || 'The Cheesy Slice'}
+            </h1>
+            <p className="text-amber-600 text-xs font-semibold truncate">
+              {settings.tagline ? settings.tagline.slice(0, 24) : 'FC Road, Pune'}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map(({ to, icon: Icon, label, exact, adminOnly }) => {
           if (adminOnly && !isAdmin) return null;
           return (
@@ -61,17 +67,17 @@ export default function Sidebar() {
               to={to}
               end={exact}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative
-                ${isActive
-                  ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 relative ${
+                  isActive
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200/80 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`
               }
             >
-              <Icon size={18} />
+              <Icon size={18} className="flex-shrink-0" />
               <span>{label}</span>
               {to === '/new-order' && itemCount > 0 && (
-                <span className="ml-auto bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                <span className="ml-auto bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-sm">
                   {itemCount}
                 </span>
               )}
@@ -81,15 +87,17 @@ export default function Sidebar() {
       </nav>
 
       {/* Audio controls */}
-      <div className="px-4 py-2.5 border-t border-[#242424] flex items-center justify-between text-xs">
+      <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between text-xs">
         <button
           type="button"
           onClick={() => {
             setAudioEnabled(!audioEnabled);
             if (!audioEnabled) playChime('new');
           }}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold transition-all ${
-            audioEnabled ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/20' : 'text-gray-500 hover:text-gray-400'
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
+            audioEnabled
+              ? 'text-amber-800 bg-amber-100 border border-amber-300/80 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 bg-white border border-gray-200'
           }`}
           title="Toggle audio alert chime"
         >
@@ -99,29 +107,29 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={testChime}
-          className="text-gray-400 hover:text-yellow-400 px-2 py-1 rounded text-[11px] font-bold transition-colors hover:bg-white/5"
+          className="text-gray-600 hover:text-amber-700 px-2 py-1 rounded text-[11px] font-bold transition-colors hover:bg-white"
           title="Test audio chime"
         >
-          Test
+          Test Sound
         </button>
       </div>
 
-      {/* User info */}
-      <div className="p-4 border-t border-[#2a2a2a]">
+      {/* User profile & Sign Out */}
+      <div className="p-4 border-t border-gray-100 bg-white">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-black font-bold text-xs">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
             {user?.full_name?.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-sm font-medium truncate">{user?.full_name}</p>
+            <p className="text-gray-900 text-sm font-semibold truncate">{user?.full_name}</p>
             <p className="text-gray-500 text-xs capitalize">{user?.role}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-400/10 text-sm transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 text-xs font-bold transition-colors"
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
           Sign Out
         </button>
       </div>

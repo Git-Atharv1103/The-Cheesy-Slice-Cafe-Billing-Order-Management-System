@@ -119,10 +119,14 @@ export async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date);
     CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(payment_status, order_status);
     CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_orders_daily_num ON orders(daily_order_number);
+    CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_name);
     CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
     CREATE INDEX IF NOT EXISTS idx_order_items_status ON order_items(status);
     CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(payment_status);
     CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category_id);
+    CREATE INDEX IF NOT EXISTS idx_menu_items_avail ON menu_items(is_available, display_order);
   `);
 
   try {

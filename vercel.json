@@ -1,11 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "name": "the-cheesy-slice-cafe",
   "services": {
     "frontend": {
       "root": "frontend/"
     },
     "backend": {
-      "root": "backend/"
+      "root": "backend/",
+      "entrypoint": "src/server.js"
     }
   },
   "rewrites": [

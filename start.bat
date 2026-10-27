@@ -12,3 +12,4 @@ echo Frontend running at: http://localhost:5173
 echo.
 echo Default login: admin / admin123
 pause
+

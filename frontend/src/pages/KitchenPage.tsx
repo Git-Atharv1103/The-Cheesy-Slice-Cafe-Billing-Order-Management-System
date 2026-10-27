@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import api from '../lib/api';
 import { useRealtime } from '../contexts/RealtimeContext';
-import { formatDateTime, formatTimeOnly, getElapsedMinutes } from '../lib/utils';
+import { formatTimeOnly, getElapsedMinutes } from '../lib/utils';
 import { 
   ChefHat, Clock, CheckCircle2, CheckSquare, Square, Play, Bell, 
-  Volume2, VolumeX, RefreshCw, AlertCircle, ShoppingBag, Utensils, 
+  Volume2, VolumeX, RefreshCw, AlertCircle, ShoppingBag, 
   Check, ArrowRight, Sparkles 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -45,7 +45,6 @@ export default function KitchenPage() {
     setAudioEnabled, 
     playChime,
     audioBlocked,
-    isAudioUnlocked,
     unlockAudio,
     testChime 
   } = useRealtime();
@@ -108,7 +107,6 @@ export default function KitchenPage() {
 
     try {
       const res = await api.patch(`/orders/${orderId}/items/${itemId}/status`, { status: newStatus });
-      // Replace with confirmed order from backend
       setOrders(prev => prev.map(o => o.id === orderId ? res.data : o));
       
       if (newStatus === 'ready') {
@@ -207,26 +205,24 @@ export default function KitchenPage() {
     };
   }, [orders]);
 
-
-
   return (
-    <div className="p-3 sm:p-5 max-w-7xl mx-auto space-y-4">
+    <div className="p-3 sm:p-5 max-w-7xl mx-auto space-y-4 bg-[#F9FAFB] min-h-screen text-gray-900">
       {/* Kitchen Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#141414] border border-[#2a2a2a] p-4 rounded-2xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 p-4 rounded-2xl shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold flex-shrink-0">
             <ChefHat size={22} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-white tracking-wide">Kitchen Display (KDS)</h1>
+              <h1 className="text-xl font-black text-gray-900 tracking-wide">Kitchen Display (KDS)</h1>
               {counts.new > 0 && (
-                <span className="bg-red-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full animate-pulse">
+                <span className="bg-red-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full animate-pulse shadow-xs">
                   {counts.new} NEW
                 </span>
               )}
             </div>
-            <p className="text-gray-400 text-xs">Individual item-level ready checkboxes • Touch-friendly live tickets</p>
+            <p className="text-gray-500 text-xs">Live orders • Item-level ready tick boxes • Multi-device auto sync</p>
           </div>
         </div>
 
@@ -235,10 +231,10 @@ export default function KitchenPage() {
           <button
             type="button"
             onClick={testChime}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#1e1e1e] hover:bg-yellow-400/20 text-yellow-400 border border-[#333] transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-all shadow-xs"
             title="Test sound notification chime"
           >
-            <Bell size={14} />
+            <Bell size={14} className="text-amber-600" />
             <span>Test Sound</span>
           </button>
 
@@ -248,10 +244,10 @@ export default function KitchenPage() {
               setAudioEnabled(!audioEnabled);
               if (!audioEnabled) playChime('new');
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-xs ${
               audioEnabled
-                ? 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30'
-                : 'bg-[#1e1e1e] text-gray-400 border-[#333]'
+                ? 'bg-amber-100 text-amber-900 border-amber-300'
+                : 'bg-gray-100 text-gray-500 border-gray-200'
             }`}
             title="Toggle audio alert chime on incoming orders"
           >
@@ -260,8 +256,9 @@ export default function KitchenPage() {
           </button>
 
           <button
+            type="button"
             onClick={loadKitchenOrders}
-            className="p-2 rounded-xl bg-[#1e1e1e] hover:bg-[#282828] text-gray-400 hover:text-white border border-[#2a2a2a] transition-colors"
+            className="p-2 rounded-xl bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-900 border border-gray-200 transition-colors shadow-xs"
             title="Refresh order tickets"
           >
             <RefreshCw size={15} />
@@ -273,14 +270,14 @@ export default function KitchenPage() {
       {audioBlocked && (
         <div
           onClick={unlockAudio}
-          className="cursor-pointer bg-amber-500/20 border border-amber-500/40 p-3 rounded-xl flex items-center justify-between gap-3 text-amber-300 animate-pulse transition-all hover:bg-amber-500/30"
+          className="cursor-pointer bg-amber-50 border border-amber-300 p-3 rounded-2xl flex items-center justify-between gap-3 text-amber-900 shadow-sm transition-all hover:bg-amber-100"
         >
           <div className="flex items-center gap-2 text-xs font-bold">
-            <Volume2 size={16} />
-            <span>Browser blocked audio autoplay. Tap here to enable live sound alerts!</span>
+            <Volume2 size={16} className="text-amber-600" />
+            <span>Browser paused audio. Tap here to enable live chef sound alerts!</span>
           </div>
-          <span className="bg-amber-500 text-black text-[11px] font-extrabold px-2.5 py-1 rounded-lg">
-            Enable Sound
+          <span className="bg-amber-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-xl shadow-xs">
+            Enable Live Sound
           </span>
         </div>
       )}
@@ -288,66 +285,72 @@ export default function KitchenPage() {
       {/* Tabs with badge counts */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide text-xs">
         <button
+          type="button"
           onClick={() => setActiveTab('all_active')}
-          className={`flex-shrink-0 px-4 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-4 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'all_active'
-              ? 'bg-yellow-400 text-black shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-amber-500 text-white'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           All Active ({counts.all_active})
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('new')}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'new'
-              ? 'bg-red-500 text-white shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-red-500 text-white'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           New ({counts.new})
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('in_progress')}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'in_progress'
-              ? 'bg-orange-500 text-white shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-amber-600 text-white'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           In Progress ({counts.in_progress})
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('partially_ready')}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'partially_ready'
-              ? 'bg-amber-400 text-black shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-amber-400 text-gray-900 font-extrabold'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           Partially Ready ({counts.partially_ready})
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('ready')}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'ready'
-              ? 'bg-green-500 text-white shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           All Items Ready ({counts.ready})
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('completed')}
-          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-2 rounded-xl font-bold transition-all shadow-xs ${
             activeTab === 'completed'
-              ? 'bg-gray-300 text-black shadow-md'
-              : 'bg-[#141414] text-gray-400 hover:text-white border border-[#242424]'
+              ? 'bg-gray-800 text-white'
+              : 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200'
           }`}
         >
           Completed ({counts.completed})
@@ -355,14 +358,14 @@ export default function KitchenPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center h-64 bg-white rounded-2xl border border-gray-200">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="bg-[#141414] border border-[#242424] rounded-2xl p-12 text-center text-gray-500 space-y-3">
-          <ShoppingBag size={42} className="mx-auto opacity-30 text-yellow-400" />
-          <p className="text-base font-semibold text-white">No orders in this filter</p>
-          <p className="text-xs text-gray-400">Incoming cashier orders will automatically pop up here in real time.</p>
+        <div className="bg-white border border-gray-200 rounded-3xl p-12 text-center text-gray-500 space-y-3 shadow-xs">
+          <ShoppingBag size={42} className="mx-auto text-gray-300" />
+          <p className="text-base font-extrabold text-gray-800">No orders in this category</p>
+          <p className="text-xs text-gray-500">Incoming cashier orders will automatically appear here live.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -380,67 +383,67 @@ export default function KitchenPage() {
             return (
               <div
                 key={order.id}
-                className={`flex flex-col justify-between bg-[#141414] rounded-2xl overflow-hidden border transition-all ${
+                className={`flex flex-col justify-between bg-white rounded-3xl overflow-hidden border transition-all shadow-xs ${
                   isNew
-                    ? 'border-red-500 shadow-lg shadow-red-500/10 ring-1 ring-red-500/50'
+                    ? 'border-red-300 ring-2 ring-red-400/20'
                     : allReady && !isCompleted
-                    ? 'border-green-500 shadow-lg shadow-green-500/10 bg-green-500/[0.02]'
+                    ? 'border-emerald-300 ring-2 ring-emerald-400/20'
                     : isCompleted
-                    ? 'border-[#242424] opacity-75'
-                    : 'border-orange-500/60 shadow-md shadow-orange-500/5'
+                    ? 'border-gray-200 opacity-80'
+                    : 'border-amber-200 shadow-sm'
                 }`}
               >
                 {/* Order Ticket Header */}
                 <div className={`p-4 border-b ${
-                  isNew ? 'bg-red-500/10 border-red-500/20' :
-                  allReady && !isCompleted ? 'bg-green-500/10 border-green-500/20' :
-                  isCompleted ? 'bg-[#181818] border-[#242424]' :
-                  'bg-orange-500/10 border-orange-500/20'
+                  isNew ? 'bg-red-50 border-red-100 text-red-950' :
+                  allReady && !isCompleted ? 'bg-emerald-50 border-emerald-100 text-emerald-950' :
+                  isCompleted ? 'bg-gray-50 border-gray-200 text-gray-800' :
+                  'bg-amber-50 border-amber-100 text-amber-950'
                 }`}>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl font-black text-white tracking-tight">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black tracking-tight text-gray-900">
                         #{order.daily_order_number}
                       </span>
-                      <span className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full tracking-wider ${
-                        isNew ? 'bg-red-500 text-white animate-pulse' :
-                        allReady && !isCompleted ? 'bg-green-500 text-white' :
+                      <span className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full tracking-wider shadow-2xs ${
+                        isNew ? 'bg-red-500 text-white' :
+                        allReady && !isCompleted ? 'bg-emerald-600 text-white' :
                         isCompleted ? 'bg-gray-600 text-white' :
-                        'bg-orange-500 text-white'
+                        'bg-amber-600 text-white'
                       }`}>
                         {allReady && !isCompleted ? 'ALL READY' : isCompleted ? 'COMPLETED' : order.order_status === 'new' ? 'NEW' : 'IN PROGRESS'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 text-gray-400 text-xs">
+                    <div className="flex items-center gap-1 text-gray-500 text-xs font-semibold">
                       <Clock size={12} />
                       <span>{getElapsedMinutes(order.created_at)}</span>
                     </div>
                   </div>
 
                   <div className="mt-2 flex items-center justify-between text-xs">
-                    <p className="font-bold text-white text-sm truncate">{order.customer_name}</p>
-                    <span className="text-gray-400 text-[11px]">{formatTimeOnly(order.created_at)}</span>
+                    <p className="font-extrabold text-gray-900 text-sm truncate">{order.customer_name}</p>
+                    <span className="text-gray-500 text-[11px] font-medium">{formatTimeOnly(order.created_at)}</span>
                   </div>
 
                   {/* Progress Indicator */}
-                  <div className="mt-3 pt-2 border-t border-white/5 space-y-1">
+                  <div className="mt-3 pt-2 border-t border-black/5 space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-gray-300">
+                      <span className="font-semibold text-gray-700">
                         {allReady ? (
-                          <span className="text-green-400 flex items-center gap-1 font-bold">
-                            <Sparkles size={12} /> All {totalItems} items ready!
+                          <span className="text-emerald-700 flex items-center gap-1 font-bold">
+                            <Sparkles size={12} /> All {totalItems} items finished!
                           </span>
                         ) : (
                           <span>{readyOrServedCount} of {totalItems} items ready</span>
                         )}
                       </span>
-                      <span className="font-mono text-gray-400">{progressPct}%</span>
+                      <span className="font-mono text-gray-500 font-bold">{progressPct}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-[#222] rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
-                          allReady ? 'bg-green-500' : 'bg-gradient-to-r from-orange-500 to-yellow-400'
+                          allReady ? 'bg-emerald-500' : 'bg-amber-500'
                         }`}
                         style={{ width: `${progressPct}%` }}
                       />
@@ -450,7 +453,7 @@ export default function KitchenPage() {
 
                 {/* Individual Item-Level Checklist */}
                 <div className="p-4 flex-1 space-y-2">
-                  <div className="divide-y divide-[#202020]">
+                  <div className="divide-y divide-gray-100">
                     {items.map((item) => {
                       const isItemPending = !item.status || item.status === 'pending';
                       const isItemPreparing = item.status === 'preparing';
@@ -462,19 +465,19 @@ export default function KitchenPage() {
                         <div
                           key={item.id}
                           className={`py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-colors ${
-                            isItemReady ? 'bg-green-500/[0.03] rounded-xl px-2 -mx-2' :
-                            isItemServed ? 'opacity-60 bg-white/[0.01] rounded-xl px-2 -mx-2' : ''
+                            isItemReady ? 'bg-emerald-50/50 rounded-xl px-2 -mx-2' :
+                            isItemServed ? 'opacity-60 bg-gray-50 rounded-xl px-2 -mx-2' : ''
                           }`}
                         >
                           {/* Item Info */}
                           <div className="flex items-start gap-2.5 min-w-0">
-                            <span className="w-7 h-7 rounded-lg bg-yellow-400 text-black font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-                              {item.quantity}x
+                            <span className="w-7 h-7 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                              {item.quantity}×
                             </span>
                             <div className="min-w-0">
-                              <p className={`text-sm font-semibold leading-tight ${
-                                isItemServed ? 'line-through text-gray-500' :
-                                isItemReady ? 'text-green-300' : 'text-white'
+                              <p className={`text-sm font-bold leading-tight ${
+                                isItemServed ? 'line-through text-gray-400' :
+                                isItemReady ? 'text-emerald-800' : 'text-gray-900'
                               }`}>
                                 {item.name}
                               </p>
@@ -482,12 +485,12 @@ export default function KitchenPage() {
                                 <p className="text-[11px] text-gray-500 mt-0.5">{item.category_name}</p>
                               )}
                               {isItemReady && (
-                                <p className="text-[10px] text-green-400/80 font-mono mt-0.5">
-                                  Ready {item.ready_at ? `at ${new Date(item.ready_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : ''}
+                                <p className="text-[10px] text-emerald-700 font-mono mt-0.5 font-semibold">
+                                  ✓ Ready {item.ready_at ? `at ${new Date(item.ready_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : ''}
                                 </p>
                               )}
                               {isItemServed && (
-                                <p className="text-[10px] text-purple-400/80 font-mono mt-0.5">
+                                <p className="text-[10px] text-gray-500 font-mono mt-0.5">
                                   Handed over to customer
                                 </p>
                               )}
@@ -502,7 +505,7 @@ export default function KitchenPage() {
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'preparing')}
-                                  className="px-2.5 py-1.5 rounded-lg bg-[#222] hover:bg-orange-500/20 text-gray-300 hover:text-orange-400 border border-[#333] hover:border-orange-500/40 text-xs font-semibold flex items-center gap-1 transition-all"
+                                  className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 hover:border-amber-300 text-xs font-bold flex items-center gap-1 transition-all"
                                   title="Mark item as preparing"
                                 >
                                   <Play size={12} fill="currentColor" />
@@ -512,7 +515,7 @@ export default function KitchenPage() {
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'ready')}
-                                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
                                   title="Tick Ready: Mark item as finished"
                                 >
                                   <Square size={13} />
@@ -526,7 +529,7 @@ export default function KitchenPage() {
                                 type="button"
                                 disabled={isUpdating}
                                 onClick={() => handleUpdateItemStatus(order.id, item.id, 'ready')}
-                                className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-green-500/10 transition-all ring-1 ring-green-400"
+                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
                                 title="Tick Ready: Mark item ready"
                               >
                                 <CheckSquare size={14} className="text-white" />
@@ -536,16 +539,16 @@ export default function KitchenPage() {
 
                             {isItemReady && (
                               <div className="flex items-center gap-1.5">
-                                <span className="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 text-[11px] font-bold flex items-center gap-1">
-                                  <CheckCircle2 size={13} className="text-green-400" />
+                                <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-extrabold flex items-center gap-1 shadow-2xs">
+                                  <CheckCircle2 size={13} className="text-emerald-700" />
                                   <span>Ready</span>
                                 </span>
                                 <button
                                   type="button"
                                   disabled={isUpdating}
                                   onClick={() => handleUpdateItemStatus(order.id, item.id, 'served')}
-                                  className="px-2.5 py-1 rounded-lg bg-[#222] hover:bg-purple-600 hover:text-white text-purple-400 border border-purple-500/30 text-xs font-semibold flex items-center gap-1 transition-all"
-                                  title="Mark this item handed over / served to customer"
+                                  className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-800 border border-gray-200 hover:border-purple-300 text-xs font-bold flex items-center gap-1 transition-all"
+                                  title="Mark this item handed over / served"
                                 >
                                   <span>Serve</span>
                                   <ArrowRight size={12} />
@@ -554,7 +557,7 @@ export default function KitchenPage() {
                             )}
 
                             {isItemServed && (
-                              <span className="px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30 text-xs font-bold flex items-center gap-1">
+                              <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200 text-xs font-bold flex items-center gap-1">
                                 <Check size={13} />
                                 <span>Served</span>
                               </span>
@@ -567,10 +570,10 @@ export default function KitchenPage() {
 
                   {/* Cashier Special Instructions */}
                   {order.special_instructions && (
-                    <div className="p-2.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 flex items-start gap-2 text-yellow-300 text-xs mt-3">
-                      <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-yellow-400" />
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2 text-amber-900 text-xs mt-3">
+                      <AlertCircle size={15} className="flex-shrink-0 mt-0.5 text-amber-600" />
                       <div>
-                        <strong className="block text-white text-[11px] uppercase tracking-wide">Cashier Note:</strong>
+                        <strong className="block text-gray-900 text-[11px] uppercase tracking-wide">Customer Request:</strong>
                         <p className="italic mt-0.5">{order.special_instructions}</p>
                       </div>
                     </div>
@@ -578,13 +581,13 @@ export default function KitchenPage() {
                 </div>
 
                 {/* Order Footer & Fast Batch Actions */}
-                <div className="p-3 bg-[#111] border-t border-[#222]">
+                <div className="p-3 bg-gray-50 border-t border-gray-200">
                   {allReady && !isCompleted && (
                     <button
                       type="button"
                       disabled={updatingOrderId === order.id}
                       onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-95 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-green-500/20 transition-all"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md transition-all active:scale-[0.99]"
                     >
                       <CheckCircle2 size={18} />
                       <span>Handover & Complete Order</span>
@@ -597,7 +600,7 @@ export default function KitchenPage() {
                         type="button"
                         disabled={updatingOrderId === order.id}
                         onClick={() => handleUpdateOrderStatus(order.id, 'preparing')}
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md transition-opacity"
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs shadow-xs transition-colors"
                       >
                         <Play size={14} fill="white" />
                         <span>Start All Items</span>
@@ -606,7 +609,7 @@ export default function KitchenPage() {
                         type="button"
                         disabled={updatingOrderId === order.id}
                         onClick={() => handleUpdateOrderStatus(order.id, 'ready')}
-                        className="px-3 bg-[#202020] hover:bg-green-600 hover:text-white text-green-400 border border-green-500/30 font-semibold py-2.5 rounded-xl text-xs transition-colors"
+                        className="px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold py-2.5 rounded-xl text-xs transition-colors shadow-2xs"
                         title="Mark all items ready at once"
                       >
                         All Ready
@@ -616,14 +619,14 @@ export default function KitchenPage() {
 
                   {!allReady && !isCompleted && !isNew && (
                     <div className="flex items-center justify-between gap-2 text-xs">
-                      <span className="text-gray-400 text-[11px] italic">
+                      <span className="text-gray-500 text-[11px]">
                         Tick individual items above as they finish
                       </span>
                       <button
                         type="button"
                         disabled={updatingOrderId === order.id}
                         onClick={() => handleUpdateOrderStatus(order.id, 'ready')}
-                        className="px-3 py-1.5 rounded-lg bg-[#202020] hover:bg-green-600 hover:text-white text-green-400 border border-green-500/30 font-semibold text-xs transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold text-xs transition-colors shadow-2xs"
                         title="Finish all items at once"
                       >
                         Mark All Ready
@@ -632,9 +635,9 @@ export default function KitchenPage() {
                   )}
 
                   {isCompleted && (
-                    <div className="text-center text-xs text-gray-500 py-1 font-medium flex items-center justify-center gap-1.5">
-                      <CheckCircle2 size={15} className="text-green-500" />
-                      <span>All Items Prepared & Completed</span>
+                    <div className="text-center text-xs text-gray-500 py-1 font-semibold flex items-center justify-center gap-1.5">
+                      <CheckCircle2 size={15} className="text-emerald-600" />
+                      <span>All Items Prepared & Handed Over</span>
                     </div>
                   )}
                 </div>

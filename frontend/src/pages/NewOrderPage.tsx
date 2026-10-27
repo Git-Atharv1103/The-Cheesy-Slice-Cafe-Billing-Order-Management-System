@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Plus, Minus, X, Filter } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Filter, ArrowRight } from 'lucide-react';
 import api from '../lib/api';
 import { useCart } from '../contexts/CartContext';
 import { formatINR } from '../lib/utils';
@@ -20,13 +20,17 @@ interface Category {
   items: MenuItem[];
 }
 
+// In-memory cache for menu data so subsequent visits are instant (0ms)
+let cachedMenuCategories: Category[] | null = null;
+
 export default function NewOrderPage() {
   const navigate = useNavigate();
-  const { items: cartItems, addItem, updateQuantity, removeItem, itemCount, subtotal } = useCart();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { items: cartItems, addItem, updateQuantity, itemCount, subtotal } = useCart();
+  const [categories, setCategories] = useState<Category[]>(cachedMenuCategories || []);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedMenuCategories);
+  const lastAddTimestamp = useRef<Record<string, number>>({});
 
   useEffect(() => {
     loadMenu();
@@ -35,9 +39,12 @@ export default function NewOrderPage() {
   async function loadMenu() {
     try {
       const res = await api.get('/menu');
+      cachedMenuCategories = res.data;
       setCategories(res.data);
     } catch (err) {
-      toast.error('Failed to load menu');
+      if (!cachedMenuCategories) {
+        toast.error('Failed to load menu. Please refresh.');
+      }
     } finally {
       setLoading(false);
     }
@@ -62,6 +69,13 @@ export default function NewOrderPage() {
   }
 
   function handleAdd(item: MenuItem & { category_name: string }) {
+    // Fast double-click throttle: ignore rapid taps within 150ms on the exact same item
+    const now = Date.now();
+    if (now - (lastAddTimestamp.current[item.id] || 0) < 150) {
+      return;
+    }
+    lastAddTimestamp.current[item.id] = now;
+
     addItem({
       menu_item_id: item.id,
       name: item.name,
@@ -70,9 +84,9 @@ export default function NewOrderPage() {
     });
   }
 
-  const handleContinue = () => {
+  const handleNext = () => {
     if (cartItems.length === 0) {
-      toast.error('Please add at least one item to the cart');
+      toast.error('Please add at least one item to your cart before proceeding.');
       return;
     }
     navigate('/cart');
@@ -80,38 +94,38 @@ export default function NewOrderPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center h-96 bg-white">
+        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="p-6 pb-4 border-b border-[#2a2a2a] bg-[#0a0a0a] sticky top-0 z-10">
-        <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
+      {/* Sticky Top Header */}
+      <div className="p-4 md:p-6 pb-4 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-xs">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-white">New Order</h1>
-            <p className="text-gray-500 text-sm">Select items from the menu</p>
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Quick Add / Menu</h1>
+            <p className="text-gray-500 text-xs">Tap items to add directly to order</p>
           </div>
           {itemCount > 0 && (
             <div className="text-right">
-              <p className="text-gray-400 text-sm">{itemCount} items</p>
-              <p className="text-yellow-400 font-bold">{formatINR(subtotal)}</p>
+              <span className="text-xs text-gray-500 font-semibold">{itemCount} items</span>
+              <p className="text-amber-600 font-black text-base">{formatINR(subtotal)}</p>
             </div>
           )}
         </div>
 
         {/* Search */}
-        <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        <div className="relative mb-3">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search menu items..."
-            className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg pl-9 pr-4 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-yellow-400 text-sm"
+            placeholder="Search pizza, sandwich, coffee, pasta..."
+            className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm shadow-xs transition-colors"
           />
         </div>
 
@@ -119,15 +133,23 @@ export default function NewOrderPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => setActiveCategory('all')}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === 'all' ? 'bg-yellow-400 text-black' : 'bg-[#1e1e1e] text-gray-400 hover:text-white'}`}
+            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all ${
+              activeCategory === 'all'
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
           >
-            All
+            All Items
           </button>
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeCategory === cat.id ? 'bg-yellow-400 text-black' : 'bg-[#1e1e1e] text-gray-400 hover:text-white'}`}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all ${
+                activeCategory === cat.id
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
             >
               {cat.name}
             </button>
@@ -136,53 +158,70 @@ export default function NewOrderPage() {
       </div>
 
       {/* Menu Grid */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
         {filteredItems.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <Filter size={32} className="mx-auto mb-3 opacity-30" />
-            <p>No items found</p>
+          <div className="text-center py-16 text-gray-500 bg-white rounded-2xl border border-gray-200 p-8 shadow-xs">
+            <Filter size={32} className="mx-auto mb-3 text-gray-300" />
+            <p className="font-semibold text-gray-700">No items match your search</p>
+            <p className="text-xs text-gray-400 mt-1">Try another category or search term</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {filteredItems.map(item => {
               const qty = getCartQty(item.id);
               return (
                 <div
                   key={item.id}
-                  className={`bg-[#141414] border rounded-xl p-4 transition-all ${qty > 0 ? 'border-yellow-400/40 bg-yellow-400/5' : 'border-[#2a2a2a] hover:border-[#3a3a3a]'}`}
+                  className={`bg-white border rounded-2xl p-4 transition-all shadow-xs flex flex-col justify-between ${
+                    qty > 0
+                      ? 'border-amber-400 ring-2 ring-amber-400/20 bg-amber-50/20'
+                      : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                  }`}
                 >
-                  {/* Category badge */}
-                  <span className="text-xs text-gray-500 font-medium">{item.category_name}</span>
-                  <p className="text-white font-semibold text-sm mt-1 leading-tight">{item.name}</p>
-                  <p className="text-yellow-400 font-bold text-base mt-2">{formatINR(item.price)}</p>
+                  <div>
+                    {/* Category badge */}
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded-md">
+                      {item.category_name}
+                    </span>
+                    <p className="text-gray-900 font-bold text-sm mt-2 leading-snug">{item.name}</p>
+                  </div>
 
-                  {/* Add/Qty control */}
-                  <div className="mt-3">
-                    {qty === 0 ? (
-                      <button
-                        onClick={() => handleAdd(item)}
-                        className="w-full flex items-center justify-center gap-1 bg-yellow-400 text-black font-bold py-1.5 rounded-lg hover:bg-yellow-300 transition-colors text-sm"
-                      >
-                        <Plus size={15} />
-                        Add
-                      </button>
-                    ) : (
-                      <div className="flex items-center justify-between bg-[#1e1e1e] rounded-lg overflow-hidden">
+                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
+                    <p className="text-amber-600 font-black text-base">{formatINR(item.price)}</p>
+
+                    {/* Add / Qty Control */}
+                    <div className="flex-shrink-0">
+                      {qty === 0 ? (
                         <button
-                          onClick={() => updateQuantity(item.id, qty - 1)}
-                          className="px-3 py-1.5 text-yellow-400 hover:bg-yellow-400/10 transition-colors"
+                          type="button"
+                          onClick={() => handleAdd(item)}
+                          className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-xl transition-all text-xs shadow-xs"
                         >
-                          <Minus size={15} />
+                          <Plus size={14} />
+                          <span>Add</span>
                         </button>
-                        <span className="text-white font-bold text-sm">{qty}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, qty + 1)}
-                          className="px-3 py-1.5 text-yellow-400 hover:bg-yellow-400/10 transition-colors"
-                        >
-                          <Plus size={15} />
-                        </button>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center bg-gray-100 border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, qty - 1)}
+                            className="px-2.5 py-1 text-gray-700 hover:bg-gray-200 transition-colors"
+                            title="Decrease"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className="text-gray-900 font-black text-xs px-2 min-w-[20px] text-center">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.id, qty + 1)}
+                            className="px-2.5 py-1 text-gray-700 hover:bg-gray-200 transition-colors"
+                            title="Increase"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -191,22 +230,35 @@ export default function NewOrderPage() {
         )}
       </div>
 
-      {/* Bottom Cart Button */}
-      {itemCount > 0 && (
-        <div className="p-4 border-t border-[#2a2a2a] bg-[#0a0a0a]">
+      {/* Sticky Bottom Next Button */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 md:left-64 right-0 p-3 md:p-4 bg-white/95 backdrop-blur-md border-t border-gray-200 z-30 shadow-lg">
+        <div className="max-w-4xl mx-auto">
           <button
-            onClick={handleContinue}
-            className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold py-4 rounded-xl flex items-center justify-between px-6 hover:opacity-90 transition-opacity"
+            type="button"
+            onClick={handleNext}
+            className={`w-full py-3.5 px-6 rounded-2xl font-black text-sm md:text-base flex items-center justify-between transition-all shadow-md ${
+              itemCount > 0
+                ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer active:scale-[0.99]'
+                : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+            }`}
           >
-            <span className="bg-black/20 rounded-lg px-2.5 py-1 text-sm">{itemCount} items</span>
-            <span className="flex items-center gap-2">
-              <ShoppingCart size={18} />
-              View Cart & Continue
-            </span>
-            <span>{formatINR(subtotal)}</span>
+            <div className="flex items-center gap-2">
+              <span className={`rounded-xl px-2.5 py-1 text-xs font-black ${itemCount > 0 ? 'bg-black/20 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {itemCount} {itemCount === 1 ? 'item' : 'items'}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ShoppingCart size={18} />
+                <span>Next: Review Cart</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-base font-black">{formatINR(subtotal)}</span>
+              <ArrowRight size={18} />
+            </div>
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

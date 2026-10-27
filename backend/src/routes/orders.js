@@ -106,6 +106,15 @@ export async function recalculateOrderStatus(db, orderId) {
   };
 }
 
+// Recent order deduplication cache to prevent accidental double-click duplicates
+const recentOrdersMap = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of recentOrdersMap.entries()) {
+    if (now - v.time > 6000) recentOrdersMap.delete(k);
+  }
+}, 30000);
+
 // POST /api/orders - Create new order (cashier & admin only)
 router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), async (req, res) => {
   try {
@@ -115,15 +124,23 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
       return res.status(400).json({ error: 'Customer name and items are required' });
     }
 
+    // Fast check for double-click duplicate creation within 3 seconds
+    const subtotalCalc = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    const dedupeKey = `${req.user?.id || 'anon'}:${customer_name.trim().toLowerCase()}:${items.length}:${subtotalCalc}`;
+    const recent = recentOrdersMap.get(dedupeKey);
+    if (recent && (Date.now() - recent.time < 3000)) {
+      return res.status(200).json(recent.order);
+    }
+
     const db = getDb();
     const orderId = uuidv4();
     const orderDate = getISTDate();
     const dailyOrderNumber = await getNextOrderNumber(db, orderDate);
 
     // Calculate totals in paise
-    const subtotal = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    const subtotal = subtotalCalc;
     const discountAmt = Math.round(Number(discount || 0) * 100);
-    const total = subtotal - discountAmt;
+    const total = Math.max(0, subtotal - discountAmt);
 
     // Payments
     const payments = paymentsList || [];
@@ -172,6 +189,9 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
     // Fetch full order
     const order = await getFullOrder(db, orderId);
 
+    // Save in dedupe map to block immediate duplicate double-taps
+    recentOrdersMap.set(dedupeKey, { time: Date.now(), order });
+
     // Broadcast real-time notification to Kitchen Display & Cashier
     broadcastEvent('order:created', order);
 
@@ -182,7 +202,7 @@ router.post('/', authenticateToken, requireRole('admin', 'cashier', 'staff'), as
   }
 });
 
-// GET /api/orders - List orders with filters
+// GET /api/orders - List orders with filters (Optimized with Batch Queries - No N+1 queries)
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { date, date_from, date_to, payment_status, order_status, search, limit = 100, offset = 0 } = req.query;
@@ -206,13 +226,52 @@ router.get('/', authenticateToken, async (req, res) => {
     sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     args.push(Number(limit), Number(offset));
 
-    const orders = await db.execute({ sql, args });
+    const ordersResult = await db.execute({ sql, args });
+    const orderRows = ordersResult.rows;
 
-    // Get items and payments for each order
-    const result = await Promise.all(orders.rows.map(async (order) => {
-      const items = await db.execute({ sql: 'SELECT * FROM order_items WHERE order_id = ? ORDER BY created_at', args: [order.id] });
-      const payments = await db.execute({ sql: 'SELECT * FROM payments WHERE order_id = ? ORDER BY created_at', args: [order.id] });
-      return { ...order, items: items.rows, payments: payments.rows };
+    if (orderRows.length === 0) {
+      return res.json([]);
+    }
+
+    // Batch load items and payments in 2 parallel queries instead of 2 * N serial roundtrips
+    const orderIds = orderRows.map(o => o.id);
+    const placeholders = orderIds.map(() => '?').join(',');
+
+    const [itemsResult, paymentsResult] = await Promise.all([
+      db.execute({
+        sql: `SELECT * FROM order_items WHERE order_id IN (${placeholders}) ORDER BY created_at ASC`,
+        args: orderIds
+      }),
+      db.execute({
+        sql: `SELECT * FROM payments WHERE order_id IN (${placeholders}) ORDER BY created_at ASC`,
+        args: orderIds
+      })
+    ]);
+
+    const itemsByOrder = new Map();
+    for (const item of itemsResult.rows) {
+      const existing = itemsByOrder.get(item.order_id);
+      if (existing) {
+        existing.push(item);
+      } else {
+        itemsByOrder.set(item.order_id, [item]);
+      }
+    }
+
+    const paymentsByOrder = new Map();
+    for (const payment of paymentsResult.rows) {
+      const existing = paymentsByOrder.get(payment.order_id);
+      if (existing) {
+        existing.push(payment);
+      } else {
+        paymentsByOrder.set(payment.order_id, [payment]);
+      }
+    }
+
+    const result = orderRows.map(order => ({
+      ...order,
+      items: itemsByOrder.get(order.id) || [],
+      payments: paymentsByOrder.get(order.id) || []
     }));
 
     res.json(result);

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useRealtime } from '../contexts/RealtimeContext';
 import { formatINR, formatDateTime, getISTDate, getPaymentStatusColor, getOrderStatusColor } from '../lib/utils';
-import { Search, Filter, Eye, ChevronDown, RefreshCw } from 'lucide-react';
+import { Search, Filter, Eye, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Order {
@@ -69,72 +69,78 @@ export default function OrdersPage() {
   }, [lastEventTime, loadOrders]);
 
   return (
-    <div className="p-4 md:p-6 pb-24 md:pb-8">
-      <div className="flex items-center justify-between mb-4 md:mb-6">
+    <div className="p-4 md:p-6 pb-24 md:pb-8 bg-[#F9FAFB] text-gray-900 min-h-screen">
+      <div className="flex items-center justify-between mb-4 md:mb-6 max-w-7xl mx-auto">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Orders</h1>
-          <p className="text-gray-500 text-xs md:text-sm">{orders.length} orders found</p>
+          <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Orders History</h1>
+          <p className="text-gray-500 text-xs md:text-sm">{orders.length} {orders.length === 1 ? 'order' : 'orders'} found</p>
         </div>
-        <button onClick={() => loadOrders(false)} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-xs md:text-sm bg-surface px-3 py-1.5 rounded-lg border border-[#2a2a2a] transition-colors">
-          <RefreshCw size={14} /> Refresh
+        <button
+          type="button"
+          onClick={() => loadOrders(false)}
+          className="flex items-center gap-1.5 text-gray-700 hover:text-gray-900 text-xs md:text-sm bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-xs hover:bg-gray-50 transition-colors font-semibold"
+        >
+          <RefreshCw size={14} className="text-amber-600" />
+          <span>Refresh</span>
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-3 md:p-4 mb-5">
+      {/* Filters Card */}
+      <div className="max-w-7xl mx-auto bg-white border border-gray-200 rounded-2xl p-4 mb-5 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
           <input
             type="date"
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs md:text-sm focus:outline-none focus:border-yellow-400"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-gray-900 text-xs md:text-sm focus:outline-none focus:border-amber-500 shadow-xs"
           />
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search order #, customer..."
-              className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg pl-9 pr-3 py-2 text-white text-xs md:text-sm focus:outline-none focus:border-yellow-400"
+              className="w-full bg-white border border-gray-300 rounded-xl pl-9 pr-3 py-2 text-gray-900 text-xs md:text-sm focus:outline-none focus:border-amber-500 shadow-xs"
             />
           </div>
           <select
             value={paymentStatus}
             onChange={e => setPaymentStatus(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs md:text-sm focus:outline-none focus:border-yellow-400"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-gray-900 text-xs md:text-sm focus:outline-none focus:border-amber-500 shadow-xs"
           >
-            <option value="">All Payment Status</option>
-            {PAYMENT_STATUSES.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="">All Payment Statuses</option>
+            {PAYMENT_STATUSES.filter(Boolean).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
           <select
             value={orderStatus}
             onChange={e => setOrderStatus(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-xs md:text-sm focus:outline-none focus:border-yellow-400"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-gray-900 text-xs md:text-sm focus:outline-none focus:border-amber-500 shadow-xs"
           >
-            <option value="">All Order Status</option>
-            {ORDER_STATUSES.filter(Boolean).map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="">All Kitchen Statuses</option>
+            {ORDER_STATUSES.filter(Boolean).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
         </div>
-        <div className="flex gap-2 mt-3 items-center">
-          <button onClick={() => setDateFilter(getISTDate())} className="text-xs text-yellow-400 hover:underline">Today</button>
-          <span className="text-gray-600">|</span>
-          <button onClick={() => { const y = new Date(); y.setDate(y.getDate()-1); setDateFilter(y.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})); }} className="text-xs text-yellow-400 hover:underline">Yesterday</button>
-          <span className="text-gray-600">|</span>
-          <button onClick={() => setDateFilter('')} className="text-xs text-gray-400 hover:text-white">All Dates</button>
+        <div className="flex gap-2 mt-3 items-center text-xs font-semibold">
+          <button type="button" onClick={() => setDateFilter(getISTDate())} className="text-amber-700 hover:underline">Today</button>
+          <span className="text-gray-300">|</span>
+          <button type="button" onClick={() => { const y = new Date(); y.setDate(y.getDate()-1); setDateFilter(y.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})); }} className="text-amber-700 hover:underline">Yesterday</button>
+          <span className="text-gray-300">|</span>
+          <button type="button" onClick={() => setDateFilter('')} className="text-gray-500 hover:text-gray-800">All Dates</button>
         </div>
       </div>
 
       {/* Orders Content */}
-      <div className="space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center h-48 bg-[#141414] border border-[#2a2a2a] rounded-xl">
-            <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center justify-center h-48 bg-white border border-gray-200 rounded-2xl shadow-xs">
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16 text-gray-500 bg-[#141414] border border-[#2a2a2a] rounded-xl">
-            <Filter size={32} className="mx-auto mb-3 opacity-30" />
-            <p>No orders found for the selected filters</p>
+          <div className="text-center py-16 text-gray-500 bg-white border border-gray-200 rounded-2xl p-6 shadow-xs">
+            <Filter size={32} className="mx-auto mb-3 text-gray-300" />
+            <p className="font-bold text-gray-700">No orders found</p>
+            <p className="text-xs text-gray-400 mt-1">Try clearing filters or search query</p>
           </div>
         ) : (
           <>
@@ -144,15 +150,15 @@ export default function OrdersPage() {
                 <div
                   key={order.id}
                   onClick={() => navigate(`/orders/${order.id}`)}
-                  className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 active:border-yellow-400/50 transition-all cursor-pointer shadow-sm"
+                  className="bg-white border border-gray-200 rounded-2xl p-4 shadow-xs hover:border-gray-300 transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="bg-yellow-400/10 text-yellow-400 font-bold text-sm px-2.5 py-1 rounded-lg border border-yellow-400/20">
+                      <span className="bg-amber-100 text-amber-900 font-black text-sm px-2.5 py-1 rounded-xl border border-amber-200">
                         #{order.daily_order_number}
                       </span>
                       <div>
-                        <p className="text-white font-semibold text-sm leading-tight">{order.customer_name}</p>
+                        <p className="text-gray-900 font-extrabold text-sm leading-tight">{order.customer_name}</p>
                         <p className="text-gray-500 text-[11px]">{formatDateTime(order.created_at)}</p>
                       </div>
                     </div>
@@ -167,32 +173,32 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Items summary */}
-                  <div className="bg-[#1e1e1e] rounded-lg px-2.5 py-1.5 mb-2.5 text-xs text-gray-300">
-                    <p className="truncate">
+                  <div className="bg-gray-50 rounded-xl px-3 py-2 mb-2.5 text-xs text-gray-700 border border-gray-100">
+                    <p className="truncate font-medium">
                       {order.items?.map(i => `${i.name} × ${i.quantity}`).join(', ') || 'No items listed'}
                     </p>
                   </div>
 
                   {/* Financial Row */}
-                  <div className="flex items-center justify-between text-xs pt-1 border-t border-[#222]">
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-3">
                       <div>
-                        <span className="text-gray-500 text-[10px] block">TOTAL</span>
-                        <span className="text-white font-bold">{formatINR(Number(order.total))}</span>
+                        <span className="text-gray-500 text-[10px] block font-semibold">TOTAL</span>
+                        <span className="text-gray-900 font-black">{formatINR(Number(order.total))}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500 text-[10px] block">PAID</span>
-                        <span className="text-green-400 font-semibold">{formatINR(Number(order.total_paid))}</span>
+                        <span className="text-gray-500 text-[10px] block font-semibold">PAID</span>
+                        <span className="text-emerald-600 font-bold">{formatINR(Number(order.total_paid))}</span>
                       </div>
                       {Number(order.balance_due) > 0 && (
                         <div>
-                          <span className="text-red-400 text-[10px] block font-medium">DUE</span>
-                          <span className="text-red-400 font-bold">{formatINR(Number(order.balance_due))}</span>
+                          <span className="text-red-500 text-[10px] block font-semibold">DUE</span>
+                          <span className="text-red-600 font-black">{formatINR(Number(order.balance_due))}</span>
                         </div>
                       )}
                     </div>
-                    <span className="text-yellow-400 font-medium text-xs flex items-center gap-0.5">
-                      View <Eye size={12} />
+                    <span className="text-amber-700 font-bold text-xs flex items-center gap-0.5">
+                      Details <Eye size={13} />
                     </span>
                   </div>
                 </div>
@@ -200,67 +206,69 @@ export default function OrdersPage() {
             </div>
 
             {/* Desktop Table View (>= md) */}
-            <div className="hidden md:block bg-[#141414] border border-[#2a2a2a] rounded-xl overflow-hidden">
+            <div className="hidden md:block bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="border-b border-[#2a2a2a]">
-                    <tr className="text-gray-500">
-                      <th className="text-left px-4 py-3">#</th>
-                      <th className="text-left px-4 py-3">Customer</th>
-                      <th className="text-left px-4 py-3">Date & Time</th>
-                      <th className="text-left px-4 py-3">Items</th>
-                      <th className="text-right px-4 py-3">Total</th>
-                      <th className="text-right px-4 py-3">Paid</th>
-                      <th className="text-right px-4 py-3">Balance</th>
-                      <th className="text-center px-4 py-3">Payment</th>
-                      <th className="text-center px-4 py-3">Status</th>
-                      <th className="text-center px-4 py-3">Action</th>
+                  <thead className="border-b border-gray-200 bg-gray-50/70">
+                    <tr className="text-gray-600 text-xs uppercase tracking-wider font-bold">
+                      <th className="text-left px-4 py-3.5">#</th>
+                      <th className="text-left px-4 py-3.5">Customer</th>
+                      <th className="text-left px-4 py-3.5">Date & Time</th>
+                      <th className="text-left px-4 py-3.5">Items</th>
+                      <th className="text-right px-4 py-3.5">Total</th>
+                      <th className="text-right px-4 py-3.5">Paid</th>
+                      <th className="text-right px-4 py-3.5">Balance</th>
+                      <th className="text-center px-4 py-3.5">Payment</th>
+                      <th className="text-center px-4 py-3.5">Status</th>
+                      <th className="text-center px-4 py-3.5">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2a2a]">
+                  <tbody className="divide-y divide-gray-100">
                     {orders.map(order => (
-                      <tr key={order.id} className="hover:bg-white/3 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="bg-yellow-400/10 text-yellow-400 font-bold text-xs px-2 py-1 rounded">
+                      <tr key={order.id} className="hover:bg-amber-50/20 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <span className="bg-amber-100 text-amber-900 font-black text-xs px-2.5 py-1 rounded-lg border border-amber-200">
                             #{order.daily_order_number}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="text-white font-medium">{order.customer_name}</p>
+                        <td className="px-4 py-3.5">
+                          <p className="text-gray-900 font-bold">{order.customer_name}</p>
                           {order.customer_phone && <p className="text-gray-500 text-xs">{order.customer_phone}</p>}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">
+                        <td className="px-4 py-3.5 text-gray-500 text-xs font-medium">
                           {formatDateTime(order.created_at)}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 max-w-xs">
-                          <p className="truncate text-xs">
-                            {order.items?.slice(0, 2).map(i => `${i.name}×${i.quantity}`).join(', ')}
+                        <td className="px-4 py-3.5 text-gray-600 max-w-xs">
+                          <p className="truncate text-xs font-medium">
+                            {order.items?.slice(0, 2).map(i => `${i.name} × ${i.quantity}`).join(', ')}
                             {order.items?.length > 2 && ` +${order.items.length - 2} more`}
                           </p>
                         </td>
-                        <td className="px-4 py-3 text-right text-white font-semibold">{formatINR(Number(order.total))}</td>
-                        <td className="px-4 py-3 text-right text-green-400">{formatINR(Number(order.total_paid))}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className={Number(order.balance_due) > 0 ? 'text-red-400' : 'text-gray-500'}>
+                        <td className="px-4 py-3.5 text-right text-gray-900 font-black">{formatINR(Number(order.total))}</td>
+                        <td className="px-4 py-3.5 text-right text-emerald-600 font-bold">{formatINR(Number(order.total_paid))}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          <span className={Number(order.balance_due) > 0 ? 'text-red-600 font-bold' : 'text-gray-400'}>
                             {formatINR(Number(order.balance_due))}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${getPaymentStatusColor(order.payment_status)}`}>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getPaymentStatusColor(order.payment_status)}`}>
                             {order.payment_status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${getOrderStatusColor(order.order_status)}`}>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getOrderStatusColor(order.order_status)}`}>
                             {order.order_status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <button
+                            type="button"
                             onClick={() => navigate(`/orders/${order.id}`)}
-                            className="flex items-center gap-1 text-yellow-400 hover:text-yellow-300 transition-colors mx-auto text-xs"
+                            className="flex items-center gap-1 text-amber-700 hover:text-amber-800 font-bold transition-colors mx-auto text-xs bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200"
                           >
-                            <Eye size={14} /> View
+                            <Eye size={14} />
+                            <span>View</span>
                           </button>
                         </td>
                       </tr>
