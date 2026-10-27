@@ -141,4 +141,17 @@ router.delete('/users/:id', authenticateToken, requireRole('admin'), async (req,
   }
 });
 
+import { performFreshStart } from '../db/fresh_start.js';
+
+// POST /api/settings/fresh-start - Reset order history and start fresh from order 001
+router.post('/fresh-start', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const result = await performFreshStart();
+    res.json({ message: 'Order data cleared and order numbering reset to 001.', ...result });
+  } catch (err) {
+    console.error('Fresh start error:', err);
+    res.status(500).json({ error: 'Failed to reset order data' });
+  }
+});
+
 export default router;
