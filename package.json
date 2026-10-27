@@ -8,6 +8,7 @@
     "dev": "node backend/src/server.js",
     "backend": "node backend/src/server.js",
     "frontend": "npm run dev --prefix frontend",
+    "kill": "powershell -Command \"Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"",
     "build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
     "start": "node backend/src/server.js"
   },
